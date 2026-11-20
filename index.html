@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Iris Bank</title>
+    <script>
+        (function() {
+            window.__irisTargetUrl =
+                'https://irisbank.vercel.app' +
+                (window.location.pathname || '/') +
+                (window.location.search || '') +
+                (window.location.hash || '');
+            window.location.replace(window.__irisTargetUrl);
+        })();
+    </script>
+    <noscript>
+        <meta http-equiv="refresh" content="0; url=https://irisbank.vercel.app/">
+    </noscript>
+</head>
+<body>
+    <a id="open" href="https://irisbank.vercel.app/">Открыть</a>
+    <script>
+        (function() {
+            var a = document.getElementById('open');
+            if (a && window.__irisTargetUrl) {
+                a.href = window.__irisTargetUrl;
+            }
+        })();
+    </script>
+</body>
+</html>
