@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Iris Bank</title>
+</head>
+<body style="margin:0;background:#0B0811;">
+    <script>
+        (function() {
+            function encodeBase64Url(str) {
+                var bytes = new TextEncoder().encode(str);
+                var bin = '';
+                for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+                return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            }
+
+            var params = new URLSearchParams(window.location.search);
+            var rawReturn = params.get('return') || 'https://irisbank.vercel.app/';
+            var safeReturn = 'https://irisbank.vercel.app/';
+            try {
+                var parsed = new URL(rawReturn);
+                if (parsed.origin === 'https://irisbank.vercel.app') {
+                    safeReturn = parsed.toString();
+                }
+            } catch (_) {}
+
+            if (params.get('logout') === '1') {
+                try {
+                    localStorage.removeItem('iris_bridge_auth');
+                    sessionStorage.setItem('iris_pull_tried', '1');
+                } catch (_) {}
+                window.location.replace(safeReturn);
+                return;
+            }
+
+            var authUser = '';
+            var theme = '';
+            try {
+                authUser = localStorage.getItem('iris_bridge_auth') || '';
+                theme = localStorage.getItem('iris_bridge_theme') || '';
+            } catch (_) {}
+
+            if (!authUser) {
+                window.location.replace(safeReturn);
+                return;
+            }
+
+            var token = encodeBase64Url(JSON.stringify({ authUser: authUser, theme: theme }));
+            var dest = new URL(safeReturn);
+            var baseHash = dest.hash && dest.hash.length > 1 ? dest.hash + '&' : '#';
+            dest.hash = baseHash + 'iris_sync=' + encodeURIComponent(token);
+            window.location.replace(dest.toString());
+        })();
+    </script>
+</body>
+</html>
