@@ -25,9 +25,57 @@
     <iframe id="app" allow="clipboard-read; clipboard-write" allowfullscreen></iframe>
     <script>
         (function() {
+            var TARGET_ORIGIN = 'https://irisbank.vercel.app';
+            var BRIDGE_PREFIX = '__IRIS_BRIDGE__:';
             var frame = document.getElementById('app');
+
+            function readPayload() {
+                var authUser = '';
+                var theme = '';
+                try {
+                    authUser = localStorage.getItem('iris_bridge_auth') || '';
+                    theme = localStorage.getItem('iris_bridge_theme') || '';
+                } catch (_) {}
+                return { authUser: authUser, theme: theme };
+            }
+
+            function syncFrameName(payload) {
+                try {
+                    frame.name = BRIDGE_PREFIX + JSON.stringify(payload);
+                } catch (_) {}
+            }
+
+            window.addEventListener('message', function(event) {
+                if (event.origin !== TARGET_ORIGIN || !event.data || typeof event.data !== 'object') return;
+                var msg = event.data;
+                if (msg.type === 'iris_bridge_save') {
+                    try {
+                        if (typeof msg.authUser === 'string' && msg.authUser) {
+                            localStorage.setItem('iris_bridge_auth', msg.authUser);
+                        }
+                        if (typeof msg.theme === 'string') {
+                            localStorage.setItem('iris_bridge_theme', msg.theme);
+                        }
+                    } catch (_) {}
+                    syncFrameName(readPayload());
+                } else if (msg.type === 'iris_bridge_clear') {
+                    try {
+                        localStorage.removeItem('iris_bridge_auth');
+                    } catch (_) {}
+                    syncFrameName(readPayload());
+                } else if (msg.type === 'iris_bridge_nav') {
+                    if (msg.title) document.title = msg.title;
+                    if (typeof msg.path === 'string' && msg.path.charAt(0) === '/') {
+                        try {
+                            history.replaceState(null, '', msg.path);
+                        } catch (_) {}
+                    }
+                }
+            });
+
+            syncFrameName(readPayload());
             frame.src =
-                'https://irisbank.vercel.app' +
+                TARGET_ORIGIN +
                 (window.location.pathname || '/') +
                 (window.location.search || '') +
                 (window.location.hash || '');
